@@ -16,5 +16,6 @@ public:
 	int Initialize(const char* serialport, int baud);
 	int ReadUntil(int fd, char* buf, char until);
 	int ReadFromUntil(int fd, char* buf, char from, char until);
+	int ReadBlock(int fd, char* buf);
 };
 

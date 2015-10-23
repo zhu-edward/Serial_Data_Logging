@@ -7,7 +7,6 @@ Serial::Serial () {}
 int Serial::Initialize (const char* serialport, int baud) {
 	struct termios toptions;
 	int fd = open(serialport, O_RDWR | O_NOCTTY | O_NDELAY);
-
 	if (fd == -1) {
 		perror("Initialize: Unable to open serial port");
 		return -1;
@@ -17,11 +16,11 @@ int Serial::Initialize (const char* serialport, int baud) {
     }
 
 	if (tcgetattr(fd, &toptions) < 0) {
-		perror("Initialize: Could not get term attributes");
+		perror("Initialize: Could not get terminal attributes");
 		return -1;
 	}
     else {
-        printf("Initialize: Term attributes read!\n");
+        printf("Initialize: Terminal attributes read!\n");
     }
 
 	speed_t brate;
@@ -64,11 +63,11 @@ int Serial::Initialize (const char* serialport, int baud) {
     toptions.c_cc[VTIME] = 20;
     
     if (tcsetattr(fd, TCSANOW, &toptions) < 0) {
-        perror("Initialize: Couldn't set term attributes");
+        perror("Initialize: Couldn't set terminal attributes");
         return -1;
     }
     else {
-        printf("Initialize: Term attributes set!\n");
+        printf("Initialize: Terminal attributes set!\n");
     }
 
     return fd;
@@ -79,8 +78,8 @@ int Serial::ReadUntil (int fd, char* buf, char until) {
     int i=0;
     do { 
         int n = read(fd, b, 1);  // read a char at a time
-        if (n==-1) return -1;    // couldn't read
-        if (n==0) {
+        if (n == -1) return -1;    // couldn't read
+        if (n == 0) {
             usleep( 10 * 1000 ); // wait 10 msec try again
             continue;
         }
@@ -98,7 +97,7 @@ int Serial::ReadFromUntil (int fd, char* buf, char from, char until) {
     do {
         int n = read(fd, b, 1);
         if (n == -1) return -1;
-        if (n==0) {
+        if (n == 0) {
             usleep( 10 * 1000 ); // wait 10 msec try again
             continue;
         }
@@ -107,7 +106,7 @@ int Serial::ReadFromUntil (int fd, char* buf, char from, char until) {
             buf[i] = b[0];
             i++;
         }
-        if (readEn == 1) {
+        else if (readEn == 1) {
             buf[i] = b[0];
             i++;
         }
@@ -116,4 +115,10 @@ int Serial::ReadFromUntil (int fd, char* buf, char from, char until) {
     buf[i] = 0;
     return 0;
 }
-    
+
+int Serial::ReadBlock (int fd, char* buf) {
+    int n = read(fd, buf, sizeof(buf)-1);
+    if (n == -1) return -1;
+    buf[n] = 0;
+    return 0;
+}

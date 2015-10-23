@@ -5,6 +5,7 @@ using namespace std;
 #include <time.h>
 #include <iostream>
 #include <fstream>
+#include <ostream>
 
 int findChksum (std::string &msg) {
 	int chksum = 0;
@@ -16,9 +17,8 @@ int findChksum (std::string &msg) {
 
 int main (void) {
 	// Initialize read buffer, and serial port parameters
-	char buf[128];
 	int fd;
-	int baud = 9600;
+	const int baud = 9600;
 	char serialport[] = "/dev/ttyACM0";
 
 	// Define the delimiters of message
@@ -37,7 +37,7 @@ int main (void) {
 	std::string filename = logPath + "log_" + timestr.substr(0,timestr.length()-1) + ".dat";
 
 	// Display file name
-	printf("main: Data is being logged into the file: ");
+	cout << "main: Data is being logged into the file: ";
 	cout << filename << endl;
 
 	// Initialize serial port
@@ -46,17 +46,22 @@ int main (void) {
 
 	// Read from serial port and write to file
 	if (fd > 0) {
-		ofstream file (filename.c_str());
+		std::ofstream file (filename.c_str());
 		if (file.is_open()) {
-			printf("main: File opened successfully, logging data...\n");
+			cout << "main: File opened successfully, logging data...\n";
 			while (1) {
-				if (serial.ReadUntil(fd, buf, '\n') != -1) {
-					//printf("%s", buf);
+				char buf[127];
+				if (serial.ReadBlock(fd, buf) != -1) {
 					//file << buf;
+					cout << buf;
+					//printf("%s", buf);
+					//cout << sizeof(buf) << endl;
 					// Convert character array into string
 					std::string buffer = buf;
-					foundStart = buffer.find(startChar);
-					foundEnd = buffer.find(endChar);
+					//cout << buffer;
+					foundStart = buffer.find_first_of(startChar);
+					foundEnd = buffer.find_first_of(endChar, foundStart+1);
+					//cout << foundStart << "|" << foundEnd << endl;
 					if ((foundStart != std::string::npos) && (foundEnd != std::string::npos)) {
 						std::string msg = buffer.substr(foundStart, (foundEnd-foundStart+1));
 						std::string::size_type sz;
@@ -64,21 +69,20 @@ int main (void) {
 						chksum = findChksum(msg);
 						if (chksum == msgChksum) {
 							msg = msg + '\n';
-							//printf("%s", msg.c_str());
-							//file << msg.c_str();
-							//file << "Hello\n";
+							//file << msg;
+							//cout << msg;
 						}
 					}
 				}
 			}
 		}
 		else {
-			printf("main: File failed to open, exiting...\n");
+			cout << "main: File failed to open, exiting...\n";
 			exit(EXIT_FAILURE);
 		}	
 	}
 	else {
-		printf("main: Initialization failed, exiting...\n");
+		cout << "main: Initialization failed, exiting...\n";
 		exit(EXIT_FAILURE);
 	}
 
